@@ -1,0 +1,33 @@
+#coded in python by RocketBoys123
+#can be used to accuractely detect exoplanets
+import pandas as pd
+from sklearn.model_selection import train_test_split
+import warnings
+warnings.filterwarnings('ignore')
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score
+from lightgbm import LGBMClassifier
+
+df = pd.read_csv('/kaggle/input/nasaexoplanets/cleaned_5250.csv') # import exoplanets database from kaggle
+df.head()
+df.info() # preprocessing. drop unnecessary variables you don't wish to include during learning later
+df.describe().T # make sure to use Excel if you wish to perform further data analysis
+
+# get rid of null values
+df.isnull().sum()
+new_df = df.dropna()
+new_df.isnull().sum()
+x = new_df.drop(['name','planet_type','mass_wrt','radius_wrt','detection_method'],axis=1)
+dms = new_df[['name','mass_wrt','radius_wrt','detection_method']]
+X_ = pd.get_dummies(dms)
+X = pd.concat([x,X_],axis=1)
+Y = new_df['planet_type']
+
+#begin training of decision tree here
+x_train, x_test, y_train, y_test = train_test_split(X,Y,test_size=0.4,random_state=70) # adjust these variables as you please to adjust accuracy
+sc = StandardScaler()
+X_train = sc.fit_transform(x_train)
+X_test = sc.transform(x_test)
+ml = LGBMClassifier().fit(X_train,y_train)
+y_pred = ml.predict(X_test)
+print(round(accuracy_score(y_test,y_pred)*100, 2), "% accuracy achieved")
